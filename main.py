@@ -12,6 +12,8 @@ from autogen_core import (
     message_handler,
     AgentType,
     TRACE_LOGGER_NAME,
+    TypeSubscription,
+    TopicId,
 )
 from autogen_core.model_context import BufferedChatCompletionContext
 from autogen_core.models import (
@@ -23,9 +25,11 @@ from autogen_core.models import (
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 
 from agents.assistant import MyAssistant
+from agents.broadcast_agent import BroadcastingAgent
 from agents.direct_send import InnerAgent, OuterAgent
 from agents.mega_agent import MegaAgent
 from agents.routed_agent import RoutedBySenderAgent
+from agents.subscribe_agent import ReceivingAgent
 from shared.messages import TextMessage, ImageMessage
 
 
@@ -110,15 +114,41 @@ async def main():
     #     ImageMessage(url="https://example.com/image.jpg", source="user2-test"), agent_id
     # )
 
+    # runtime = SingleThreadedAgentRuntime()
+    # await InnerAgent.register(runtime, "inner", lambda: InnerAgent("Inner"))
+    # await OuterAgent.register(runtime, "outer", lambda: OuterAgent("Outer", "inner"))
+    # runtime.start()
+    # outer_agent_id = AgentId("outer", "default")
+    # await runtime.send_message(
+    #     TextMessage(content="Hello, World!", source="runtime"), outer_agent_id
+    # )
+    #
+    # await runtime.stop_when_idle()
+
+    ## Broadcast
     runtime = SingleThreadedAgentRuntime()
-    await InnerAgent.register(runtime, "inner", lambda: InnerAgent("Inner"))
-    await OuterAgent.register(runtime, "outer", lambda: OuterAgent("Outer", "inner"))
-    runtime.start()
-    outer_agent_id = AgentId("outer", "default")
-    await runtime.send_message(
-        TextMessage(content="Hello, World!", source="runtime"), outer_agent_id
+
+    # Option 1: with type_subscription decorator
+    # The type_subscription class decorator automatically adds a TypeSubscription to
+    # the runtime when the agent is registered.
+    # await ReceivingAgent.register(
+    #     runtime, "receiving_agent", lambda: ReceivingAgent("Receiving Agent")
+    # )
+
+    # Option 2: with TypeSubscription
+    await BroadcastingAgent.register(
+        runtime, "broadcasting_agent", lambda: BroadcastingAgent("Broadcasting Agent")
+    )
+    await runtime.add_subscription(
+        TypeSubscription(topic_type="default", agent_type="broadcasting_agent")
     )
 
+    # Start the runtime and publish a message.
+    runtime.start()
+    await runtime.publish_message(
+        TextMessage(content="Hello, World! From the runtime!", source="runtime"),
+        topic_id=TopicId(type="default", source="default"),
+    )
     await runtime.stop_when_idle()
 
     # cathy = await Assistant.register(
