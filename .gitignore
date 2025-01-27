@@ -2,3 +2,5 @@
 __pycache__/
 .venv
 .ropeproject/
+.DS_Store
+.idea

@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from dataclasses import dataclass
 
 from autogen_core import (
@@ -10,6 +11,7 @@ from autogen_core import (
     default_subscription,
     message_handler,
     AgentType,
+    TRACE_LOGGER_NAME,
 )
 from autogen_core.model_context import BufferedChatCompletionContext
 from autogen_core.models import (
@@ -21,6 +23,7 @@ from autogen_core.models import (
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 
 from agents.assistant import MyAssistant
+from agents.direct_send import InnerAgent, OuterAgent
 from agents.mega_agent import MegaAgent
 from agents.routed_agent import RoutedBySenderAgent
 from shared.messages import TextMessage, ImageMessage
@@ -79,31 +82,44 @@ def get_model_client() -> OpenAIChatCompletionClient:
 
 
 async def main():
-    # logging.basicConfig(level=logging.DEBUG)
-    # logger = logging.getLogger(TRACE_LOGGER_NAME)
-    # logger.setLevel(logging.DEBUG)
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(TRACE_LOGGER_NAME)
+    logger.setLevel(logging.DEBUG)
+
+    logger.debug("Starting the runtime")
+
+    ## different messages
+    # runtime = SingleThreadedAgentRuntime()
+    # await RoutedBySenderAgent.register(
+    #     runtime, "my_agent", lambda: RoutedBySenderAgent("Routed")
+    # )
+    # runtime.start()
     #
-    # logger.debug("Starting the runtime")
+    # agent_id = AgentId("my_agent", "default")
+    #
+    # await runtime.send_message(
+    #     TextMessage(content="Hello, World!", source="user1-test"), agent_id
+    # )
+    # await runtime.send_message(
+    #     TextMessage(content="Hello, World!", source="user2-test"), agent_id
+    # )
+    # await runtime.send_message(
+    #     ImageMessage(url="https://example.com/image.jpg", source="user1-test"), agent_id
+    # )
+    # await runtime.send_message(
+    #     ImageMessage(url="https://example.com/image.jpg", source="user2-test"), agent_id
+    # )
+
     runtime = SingleThreadedAgentRuntime()
-    await RoutedBySenderAgent.register(
-        runtime, "my_agent", lambda: RoutedBySenderAgent("Routed")
-    )
+    await InnerAgent.register(runtime, "inner", lambda: InnerAgent("Inner"))
+    await OuterAgent.register(runtime, "outer", lambda: OuterAgent("Outer", "inner"))
     runtime.start()
+    outer_agent_id = AgentId("outer", "default")
+    await runtime.send_message(
+        TextMessage(content="Hello, World!", source="runtime"), outer_agent_id
+    )
 
-    agent_id = AgentId("my_agent", "default")
-
-    await runtime.send_message(
-        TextMessage(content="Hello, World!", source="user1-test"), agent_id
-    )
-    await runtime.send_message(
-        TextMessage(content="Hello, World!", source="user2-test"), agent_id
-    )
-    await runtime.send_message(
-        ImageMessage(url="https://example.com/image.jpg", source="user1-test"), agent_id
-    )
-    await runtime.send_message(
-        ImageMessage(url="https://example.com/image.jpg", source="user2-test"), agent_id
-    )
+    await runtime.stop_when_idle()
 
     # cathy = await Assistant.register(
     #     runtime,
@@ -151,8 +167,6 @@ async def main():
     # await runtime.send_message(
     #     ImageMessage(url="https://example.com/image.jpg", source="User"), agent_id
     # )
-
-    await runtime.stop_when_idle()
 
 
 if __name__ == "__main__":
