@@ -1,24 +1,23 @@
 import logging
-from typing import Optional, List, Any, Callable, Awaitable
+from typing import List
 
-from autogen_agentchat.agents import AssistantAgent
 from autogen_core import (
-    RoutedAgent,
-    MessageContext,
-    message_handler,
     EVENT_LOGGER_NAME,
     AgentId,
+    MessageContext,
+    RoutedAgent,
+    message_handler,
 )
-from autogen_core.models import ModelFamily, LLMMessage, SystemMessage, UserMessage
+from autogen_core.models import LLMMessage, ModelFamily, SystemMessage, UserMessage
 from autogen_core.tool_agent import tool_agent_caller_loop
-from autogen_core.tools import FunctionTool, BaseTool, ToolSchema
+from autogen_core.tools import ToolSchema
 from autogen_ext.models.openai import OpenAIChatCompletionClient
-from autogen_core import TRACE_LOGGER_NAME
 
-from shared.messages import ImageMessage, TextMessage
+from shared.messages import TextMessage
 
 
 class ImageRecognizerAgent(RoutedAgent):
+    """An agent that recognizes images."""
     def __init__(
         self,
         name: str,
@@ -59,7 +58,9 @@ class ImageRecognizerAgent(RoutedAgent):
     async def handle_image(
         self, message: TextMessage, ctx: MessageContext
     ) -> TextMessage:
-        logging.debug(f"Received image message: {message.content}")
+        """Handle an image message."""
+
+        logging.debug("Received image message: %s", {message.content})
 
         session = self._system_message + [
             UserMessage(content=message.content, source="user")
@@ -73,6 +74,7 @@ class ImageRecognizerAgent(RoutedAgent):
             cancellation_token=ctx.cancellation_token,
             input_messages=session,
         )
-        logging.debug(f"Received messages: {messages[-1].content}")
+
+        logging.debug("Received messages: %s", messages[-1].content)
 
         return TextMessage(content=messages[-1].content)

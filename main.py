@@ -1,35 +1,19 @@
 import asyncio
 import logging
-from dataclasses import dataclass
+from fastapi import FastAPI
 
-from autogen_agentchat.agents import AssistantAgent
 from autogen_core import (
-    AgentId,
-    DefaultTopicId,
-    MessageContext,
-    RoutedAgent,
-    SingleThreadedAgentRuntime,
-    default_subscription,
-    message_handler,
-    AgentType,
     TRACE_LOGGER_NAME,
-    TypeSubscription,
-    TopicId,
+    AgentId,
+    SingleThreadedAgentRuntime,
 )
-from autogen_core.model_context import BufferedChatCompletionContext
 from autogen_core.models import (
-    AssistantMessage,
-    ChatCompletionClient,
-    SystemMessage,
-    UserMessage,
     ModelFamily,
 )
 from autogen_core.tool_agent import ToolAgent
-from autogen_ext.models.openai import OpenAIChatCompletionClient
-from autogen_ext.tools.code_execution import PythonCodeExecutionTool
 
 from agents.image_recognizer import ImageRecognizerAgent
-from shared.messages import TextMessage, ImageMessage
+from shared.messages import TextMessage
 from tools.image_from_file import ImageReaderTool
 
 
@@ -41,9 +25,9 @@ async def main():
     logger.debug("Starting the runtime")
     runtime = SingleThreadedAgentRuntime()
 
-    tools = [ImageReaderTool()]
+    app = FastAPI()
 
-    AssistantAgent
+    tools = [ImageReaderTool()]
 
     await ImageRecognizerAgent.register(
         runtime,
