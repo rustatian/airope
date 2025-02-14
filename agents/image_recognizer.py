@@ -1,5 +1,4 @@
 import logging
-from typing import List
 
 from autogen_core import (
     EVENT_LOGGER_NAME,
@@ -24,14 +23,7 @@ class ImageRecognizerAgent(RoutedAgent):
         model: str,
         api_key: str,
         base_url: str,
-        family: ModelFamily,
-        # tools: (
-        #     List[
-        #         BaseTool[Any, Any] | Callable[..., Any] | Callable[..., Awaitable[Any]]
-        #     ]
-        #     | None
-        # ) = None,
-        tools_schema: List[ToolSchema] | None = None,
+        tools_schema: list[ToolSchema] | None = None,
     ):
         super().__init__("An image recognizer agent")
         model_client = OpenAIChatCompletionClient(
@@ -42,14 +34,14 @@ class ImageRecognizerAgent(RoutedAgent):
                 "function_calling": True,
                 "json_output": False,
                 "vision": False,
-                "family": family,
+                "family": ModelFamily.O1,
             },
         )
 
         self._tools_schema = tools_schema or []
         self._model_client = model_client
         self.logger = logging.getLogger(f"{EVENT_LOGGER_NAME}.image_recognizer")
-        self._system_message: List[LLMMessage] = [
+        self._system_message: list[LLMMessage] = [
             SystemMessage(content="You're helpful AI assistant")
         ]
         self._tool_agent_id = AgentId(name, self.id.key)
@@ -77,4 +69,4 @@ class ImageRecognizerAgent(RoutedAgent):
 
         logging.debug("Received messages: %s", messages[-1].content)
 
-        return TextMessage(content=messages[-1].content)
+        return TextMessage(content=str(messages[-1].content))

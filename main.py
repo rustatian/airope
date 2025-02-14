@@ -1,3 +1,4 @@
+from ast import List
 import asyncio
 import logging
 from fastapi import FastAPI
@@ -7,14 +8,12 @@ from autogen_core import (
     AgentId,
     SingleThreadedAgentRuntime,
 )
-from autogen_core.models import (
-    ModelFamily,
-)
 from autogen_core.tool_agent import ToolAgent
+from openai.types.beta.thread_create_and_run_params import Tool
 
 from agents.image_recognizer import ImageRecognizerAgent
 from shared.messages import TextMessage
-from tools.image_from_file import ImageReaderTool
+from tools.image_from_file import ImageReaderTool, read_image_tool
 
 
 async def main():
@@ -25,19 +24,16 @@ async def main():
     logger.debug("Starting the runtime")
     runtime = SingleThreadedAgentRuntime()
 
-    app = FastAPI()
-
     tools = [ImageReaderTool()]
 
     await ImageRecognizerAgent.register(
         runtime,
         "tool_use_agent",
         lambda: ImageRecognizerAgent(
-            "tool_use_agent",
+            "tool_executor_agent",
             "llama3.3:70b",
             "placeholder",
             "http://127.0.0.1:11434/v1",
-            ModelFamily.ANY,
             [tool.schema for tool in tools],
         ),
     )
@@ -45,7 +41,7 @@ async def main():
     await ToolAgent.register(
         runtime,
         "tool_executor_agent",
-        lambda: ToolAgent("tool execute agent", tools=tools),
+        lambda: ToolAgent("tool execute agent", tools=tools),  # type: ignore
     )
 
     runtime.start()
