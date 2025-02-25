@@ -1,5 +1,7 @@
 import logging
 
+
+from autogen_agentchat.messages import TextMessage
 from autogen_core import (
     EVENT_LOGGER_NAME,
     AgentId,
@@ -12,14 +14,15 @@ from autogen_core.tool_agent import tool_agent_caller_loop
 from autogen_core.tools import ToolSchema
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 
-from shared.messages import TextMessage
+_log = logging.getLogger(__name__)
 
 
 class ImageRecognizerAgent(RoutedAgent):
     """An agent that recognizes images."""
+
     def __init__(
         self,
-        name: str,
+        tool_agent_name: str,
         model: str,
         api_key: str,
         base_url: str,
@@ -34,7 +37,7 @@ class ImageRecognizerAgent(RoutedAgent):
                 "function_calling": True,
                 "json_output": False,
                 "vision": False,
-                "family": ModelFamily.O1,
+                "family": ModelFamily.GPT_4O,
             },
         )
 
@@ -44,15 +47,13 @@ class ImageRecognizerAgent(RoutedAgent):
         self._system_message: list[LLMMessage] = [
             SystemMessage(content="You're helpful AI assistant")
         ]
-        self._tool_agent_id = AgentId(name, self.id.key)
+        self._tool_agent_id = AgentId(tool_agent_name, self.id.key)
 
     @message_handler
-    async def handle_image(
-        self, message: TextMessage, ctx: MessageContext
-    ) -> TextMessage:
+    async def handle_image(self, message: TextMessage, ctx: MessageContext) -> str:
         """Handle an image message."""
 
-        logging.debug("Received image message: %s", {message.content})
+        _log.debug("Received image message: %s", {message.content})
 
         session = self._system_message + [
             UserMessage(content=message.content, source="user")
@@ -67,6 +68,6 @@ class ImageRecognizerAgent(RoutedAgent):
             input_messages=session,
         )
 
-        logging.debug("Received messages: %s", messages[-1].content)
+        _log.debug("received messages: %s", messages[-1].content)
 
-        return TextMessage(content=str(messages[-1].content))
+        return str(messages[-1].content)

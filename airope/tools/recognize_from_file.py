@@ -1,18 +1,15 @@
 # Description: Read image from file
 from abc import ABC
+import logging
 
 from autogen_core import CancellationToken
 from autogen_core.tools import BaseTool
-from autogen_core.tools import FunctionTool
 
 from shared.messages import ReadImageToolRequest, ReadImageToolReturn
-
-async def read_image(file: str) -> bytes:
-    with open(file, "rb") as f:
-        return f.read()
+from docling.document_converter import DocumentConverter
 
 
-read_image_tool = FunctionTool(func=read_image, description="Read image from file")
+_log = logging.getLogger(__name__)
 
 
 class ImageReaderTool(BaseTool[ReadImageToolRequest, ReadImageToolReturn], ABC):
@@ -23,11 +20,15 @@ class ImageReaderTool(BaseTool[ReadImageToolRequest, ReadImageToolReturn], ABC):
             args_type=ReadImageToolRequest,
             return_type=ReadImageToolReturn,
             name="read_image_from_file",
-            description="Read image from file",
+            description="Read image/doc/docs from the provided path",
         )
 
     async def run(
         self, args: ReadImageToolRequest, cancellation_token: CancellationToken
     ) -> ReadImageToolReturn:
-        with open(args.path, "rb") as f:
-            return ReadImageToolReturn(image=f.read())
+        _log.debug("reading data from file %s", args.path)
+        converter = DocumentConverter()
+        result = converter.convert(args.path)
+        data = result.document.export_to_text()
+        _log.debug("data: %s", data)
+        return ReadImageToolReturn(text=data)

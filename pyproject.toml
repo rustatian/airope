@@ -5,16 +5,14 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "autogen-agentchat>=0.4.6",
-    "autogen-ext[openai]>=0.4.6",
-    "black>=24.10.0",
-    "openai>=1.61.1",
+    "autogen-agentchat>=0.4.7",
+    "autogen-ext[openai]>=0.4.7",
+    "black>=25.1.0",
+    "openai>=1.63.0",
     "uv>=0.5.26",
     "certifi>=2025.1.31",
-    "fastapi[standard]>=0.115.8",
+    "fastapi[standard]>=0.115.8"
 ]
 
 [dependency-groups]
-dev = [
-    "ruff>=0.9.5",
-]
+dev = ["ruff>=0.9.5"]
