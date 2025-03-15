@@ -1,6 +1,5 @@
 import logging
 
-
 from autogen_agentchat.messages import TextMessage
 from autogen_core import (
     EVENT_LOGGER_NAME,
@@ -12,7 +11,7 @@ from autogen_core import (
 from autogen_core.models import LLMMessage, ModelFamily, SystemMessage, UserMessage
 from autogen_core.tool_agent import tool_agent_caller_loop
 from autogen_core.tools import ToolSchema
-from autogen_ext.models.openai import OpenAIChatCompletionClient
+from autogen_ext.models.ollama import OllamaChatCompletionClient
 
 _log = logging.getLogger(__name__)
 
@@ -24,20 +23,16 @@ class ImageRecognizerAgent(RoutedAgent):
         self,
         tool_agent_name: str,
         model: str,
-        api_key: str,
-        base_url: str,
         tools_schema: list[ToolSchema] | None = None,
     ):
         super().__init__("An image recognizer agent")
-        model_client = OpenAIChatCompletionClient(
+        model_client = OllamaChatCompletionClient(
             model=model,
-            api_key=api_key,
-            base_url=base_url,
             model_info={
                 "function_calling": True,
                 "json_output": False,
                 "vision": False,
-                "family": ModelFamily.GPT_4O,
+                "family": ModelFamily.UNKNOWN,
             },
         )
 

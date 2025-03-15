@@ -1,13 +1,12 @@
 # Description: Read image from file
-from abc import ABC
 import logging
+from abc import ABC
 
 from autogen_core import CancellationToken
 from autogen_core.tools import BaseTool
-
-from shared.messages import ReadImageToolRequest, ReadImageToolReturn
 from docling.document_converter import DocumentConverter
 
+from airope.shared.messages import ReadImageToolRequest, ReadImageToolReturn
 
 _log = logging.getLogger(__name__)
 
@@ -20,8 +19,12 @@ class ImageReaderTool(BaseTool[ReadImageToolRequest, ReadImageToolReturn], ABC):
             args_type=ReadImageToolRequest,
             return_type=ReadImageToolReturn,
             name="read_image_from_file",
-            description="Read image/doc/docs from the provided path",
+            description="Recognize content of the image/pdf by the provided path",
         )
+
+    @classmethod
+    async def foo(cls):
+        pass
 
     async def run(
         self, args: ReadImageToolRequest, cancellation_token: CancellationToken
@@ -30,5 +33,4 @@ class ImageReaderTool(BaseTool[ReadImageToolRequest, ReadImageToolReturn], ABC):
         converter = DocumentConverter()
         result = converter.convert(args.path)
         data = result.document.export_to_text()
-        _log.debug("data: %s", data)
         return ReadImageToolReturn(text=data)
